@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
+	"github.com/nebhale/client-go/bindings"
 )
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,10 +46,30 @@ func quoteOfTheDayHandler(client *redis.Client) http.HandlerFunc {
 
 func main() {
 	// Create Redis Client
+	var err error
+	b := bindings.FromServiceBindingRoot()
+	b = bindings.Filter(b, "redis")
+	if len(b) != 1 {
+		_, _ = fmt.Fprintf(os.Stderr, "Incorrect number of redis drivers: %d\n", len(b))
+		os.Exit(1)
+	}
+	host, ok := bindings.Get(b[0], "host")
+
+	if !ok {
+		_, _ = fmt.Fprintln(os.Stderr, "No host in binding")
+		//os.Exit(1)
+	}
+	password, ok := bindings.Get(b[0], "password")
+
+	if !ok {
+		_, _ = fmt.Fprintln(os.Stderr, "No password in binding")
+		//os.Exit(1)
+	}
+
 	var (
-		host     = getEnv("REDIS_HOST", "localhost")
-		port     = string(getEnv("REDIS_PORT", "6379"))
-		password = getEnv("REDIS_PASSWORD", "")
+		//host     = getEnv("REDIS_HOST", "localhost")
+		port = "6379"
+		//password = getEnv("REDIS_PASSWORD", "")
 	)
 
 	client := redis.NewClient(&redis.Options{
@@ -56,7 +78,7 @@ func main() {
 		DB:       0,
 	})
 
-	_, err := client.Ping().Result()
+	_, err = client.Ping().Result()
 	if err != nil {
 		log.Fatal(err)
 	}
