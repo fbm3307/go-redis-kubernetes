@@ -46,6 +46,7 @@ func quoteOfTheDayHandler(client *redis.Client) http.HandlerFunc {
 
 func main() {
 	// Create Redis Client
+	fmt.Println("Hello")
 	var err error
 	b := bindings.FromServiceBindingRoot()
 	b = bindings.Filter(b, "redis")
